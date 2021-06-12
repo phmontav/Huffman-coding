@@ -12,14 +12,24 @@ struct Node
     Node(int freq, char ch) : freq(freq), ch(ch), right(nullptr), left(nullptr) {}
     Node() : freq(0), ch('\0'), right(nullptr), left(nullptr) {}
 };
-
+string text;
 map<char, int> char_freq;
 vector<pair<int, char>> freq_table;
 vector<Node *> freq_Node;
+vector<pair<char, string>> code_table;
+map<char,string > char_code;
 
 bool comparator(Node *n1, Node *n2)
 {
     return n1->freq > n2->freq;
+}
+
+bool comparator_codeTable(pair<char, string> p1, pair<char, string> p2)
+{
+    if (p1.second.size() < p2.second.size())
+        return true;
+    else
+        return false;
 }
 
 void make_freqTable()
@@ -36,6 +46,7 @@ void make_freqTable()
         while (fscanf(arq, "%c", &ch) != EOF)
         {
             char_freq[ch]++;
+            text.push_back(ch);
         }
 
         for (auto itr = char_freq.begin(); itr != char_freq.end(); itr++)
@@ -46,6 +57,29 @@ void make_freqTable()
         reverse(freq_table.begin(), freq_table.end());
     }
 }
+
+void make_CodeFile()
+{
+    char url[] = "texto.ctx";
+    FILE *arq;
+    arq = fopen(url,"w");
+    if(arq == NULL)
+        printf("Erro ao abrir arquivo\n");
+    else
+    {
+        for(auto ch : text)
+        {
+            for(auto ch_aux : char_code[ch])
+            {
+                if(ch_aux == '1' || ch_aux == '0') fputc(ch_aux,arq);
+            }
+        }
+    }
+
+}
+
+
+
 
 void make_Nodes()
 {
@@ -73,6 +107,76 @@ void make_tree()
     sort(freq_Node.begin(), freq_Node.end(), comparator);
     make_tree();
 }
+string code;
+void make_CodeTable(Node *&root)
+{
+    if (root->left == nullptr && root->right == nullptr)
+    {
+        code_table.push_back(make_pair(root->ch, code));
+        //code.pop_back();
+        return;
+    }
+    code.push_back('1');
+    make_CodeTable(root->right);
+    if (code.size() != 0)
+        code.pop_back();
+    code.push_back('0');
+    make_CodeTable(root->left);
+    if (code.size() != 0)
+        code.pop_back();
+}
+
+void map_char_code()
+{
+    for(auto aux : code_table)
+    {
+        char_code[aux.first] = aux.second;
+    }
+}
+
+void print_TreePreOrder(Node *root, FILE *&arq)
+{
+    if (root->left == nullptr && root->right == nullptr)
+        fprintf(arq,"%d,%d ",root->freq,root->ch);
+    else
+        fprintf(arq,"%d,-1 ",root->freq);
+
+    if (root->left != nullptr)
+        print_TreePreOrder(root->left, arq);
+
+    if (root->right != nullptr)
+        print_TreePreOrder(root->right, arq);
+}
+
+void print_TreeInOrder(Node *root, FILE *&arq)
+{
+    if (root->left != nullptr)
+        print_TreeInOrder(root->left, arq);
+
+    if (root->left == nullptr && root->right == nullptr)
+         fprintf(arq,"%d,%d ",root->freq,root->ch);
+    else
+        fprintf(arq,"%d,-1 ",root->freq);
+
+    if (root->right != nullptr)
+        print_TreeInOrder(root->right, arq);
+}
+
+void make_TreeFile(Node *&root)
+{
+    char url[] = "arvhuf.txt";
+    FILE *arq;
+    arq = fopen(url,"w");
+    if(arq == NULL)
+        printf("Erro ao abrir arquivo\n");
+    else
+    {
+        print_TreeInOrder(root,arq);
+        fprintf(arq,"\n");
+        print_TreePreOrder(root,arq);
+
+    }
+}
 
 int main()
 {
@@ -80,4 +184,12 @@ int main()
     make_Nodes();
     make_tree();
     Node *aux = freq_Node.back();
+    make_CodeTable(aux);
+    map_char_code();
+    sort(code_table.begin(), code_table.end(), comparator_codeTable);
+    make_CodeFile();
+    make_TreeFile(aux);
+    //print_TreePreOrder(aux);
+    cout << endl << endl;
+    //print_TreeInOrder(aux);
 }
