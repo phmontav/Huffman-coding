@@ -60,7 +60,7 @@ void make_freqTable()
 
 void make_CodeFile()
 {
-    char url[] = "texto.ctx";
+    char url[] = "texto.hfm";
     FILE *arq;
     arq = fopen(url,"w");
     if(arq == NULL)
